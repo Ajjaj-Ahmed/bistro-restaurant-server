@@ -148,7 +148,7 @@ async function run() {
       res.send(result);
     })
 
-    app.delete('menu/:id', verifyToken, verifyAdmin, async(req, res)=>{
+    app.delete('menu/:id', verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await menuCollection.deleteOne(query);
@@ -222,6 +222,31 @@ async function run() {
       const deleteResult = await cartCollection.deleteMany(query);
 
       res.send({ paymentResult, deleteResult });
+    })
+
+    // stats or analytics
+    app.get('/admin-stats', async (req, res) => {
+      const users = await userCollection.estimatedDocumentCount();
+      const menuItems = await menuCollection.estimatedDocumentCount();
+      const orders = await paymentCollection.estimatedDocumentCount();
+      // // count revenue, but this not the best way
+      // const payments = await paymentCollection.find().toArray();
+      // const revenue = payments.reduce((total, payment) => total + payment.price, 0)
+      const result = await paymentCollection.aggregate([
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$price' }
+          }
+        }
+      ]).toArray()
+
+      res.send({
+        users,
+        menuItems,
+        orders,
+        revenue
+      })
     })
 
 
