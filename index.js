@@ -225,7 +225,7 @@ async function run() {
     })
 
     // stats or analytics
-    app.get('/admin-stats', async (req, res) => {
+    app.get('/admin-stats',verifyToken, verifyAdmin, async (req, res) => {
       const users = await userCollection.estimatedDocumentCount();
       const menuItems = await menuCollection.estimatedDocumentCount();
       const orders = await paymentCollection.estimatedDocumentCount();
@@ -236,10 +236,11 @@ async function run() {
         {
           $group: {
             _id: null,
-            total: { $sum: '$price' }
+            totalRevenew: { $sum: '$price' }
           }
         }
-      ]).toArray()
+      ]).toArray();
+      const revenue = result.length > 0 ? result[0].totalRevenew : 0;
 
       res.send({
         users,
